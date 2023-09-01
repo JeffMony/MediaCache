@@ -13,4 +13,9 @@ struct RequestInfo {
   long range_end;
 };
 
+enum IP_TYPE {
+  IP_V4 = 1000,
+  IP_V6
+};
+
 #endif //PLAYERSDK_MEDIACACHE_SOURCE_NETWORK_REQUEST_INFO_H_

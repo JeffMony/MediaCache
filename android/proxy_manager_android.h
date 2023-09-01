@@ -13,7 +13,7 @@ namespace proxy {
 
 class ProxyManagerAndroid {
  public:
-  explicit ProxyManagerAndroid();
+  explicit ProxyManagerAndroid(jobject object);
 
   virtual ~ProxyManagerAndroid();
 
