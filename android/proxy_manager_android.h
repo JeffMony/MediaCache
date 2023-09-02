@@ -7,7 +7,8 @@
 
 #include <jni.h>
 #include <string>
-#include "proxy_server.h"
+#include "proxy_manager.h"
+#include "cache_config.h"
 
 namespace proxy {
 
@@ -17,7 +18,7 @@ class ProxyManagerAndroid {
 
   virtual ~ProxyManagerAndroid();
 
-  void SetCacheDir(const char *cache_dir);
+  void InitCacheConfig(cache::CacheConfig *cache_config);
 
   void Start();
 
@@ -27,7 +28,7 @@ class ProxyManagerAndroid {
 
  private:
   jobject proxy_manager_object_;
-  ProxyServer *proxy_server_;
+  ProxyManager *proxy_manager_;
 };
 
 }

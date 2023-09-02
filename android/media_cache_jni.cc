@@ -4,6 +4,7 @@
 
 #include <jni.h>
 #include "log.h"
+#include "cache_config_android.h"
 #include "proxy_manager_android.h"
 #include "url_connection_android.h"
 
@@ -28,6 +29,12 @@ static jlong PROXY_MANAGER_CREATE(JNIEnv *env, jobject object) {
   return reinterpret_cast<jlong>(proxy_manager_android);
 }
 
+static void PROXY_MANAGER_INIT_CONFIG(JNIEnv *env, jobject object, jlong id, jobject j_config) {
+  proxy::ProxyManagerAndroid *proxy_manager_android = reinterpret_cast<proxy::ProxyManagerAndroid *>(id);
+  cache::CacheConfig *cache_config = cache::GetCacheConfig(env, j_config);
+  proxy_manager_android->InitCacheConfig(cache_config);
+}
+
 static jstring PROXY_MANAGER_GET_PROXY_URL(JNIEnv *env, jobject object, jlong id, jstring j_url) {
   proxy::ProxyManagerAndroid *proxy_manager_android = reinterpret_cast<proxy::ProxyManagerAndroid *>(id);
   auto url = env->GetStringUTFChars(j_url, JNI_FALSE);
@@ -48,13 +55,14 @@ static void PROXY_MANAGER_CLOSE(JNIEnv *env, jobject object, jlong id) {
 
 static JNINativeMethod proxyManagerMethods[] = {
     {"createHandler", "()J", (void **) PROXY_MANAGER_CREATE },
+    {"initConfig", "(JLcom/jeffmony/mediacache/ProxyConfig;)V", (void **) PROXY_MANAGER_INIT_CONFIG },
     {"getProxyUrl", "(JLjava/lang/String;)Ljava/lang/String;", (void **) PROXY_MANAGER_GET_PROXY_URL },
     {"start", "(J)V", (void **) PROXY_MANAGER_START },
     {"close", "(J)V", (void **) PROXY_MANAGER_CLOSE },
 };
 
 static jlong URL_CONNECTION_CREATE(JNIEnv *env, jobject object) {
-
+  return 0;
 }
 
 static void URL_CONNECTION_START(JNIEnv *env, jobject object, jlong id, jstring j_url) {

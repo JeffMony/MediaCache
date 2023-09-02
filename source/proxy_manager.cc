@@ -2,7 +2,7 @@
 // Created by jefflee on 2023/8/31.
 //
 
-#include "proxy_server.h"
+#include "proxy_manager.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include "event2/buffer.h"
@@ -11,7 +11,7 @@
 #include "event2/bufferevent.h"
 #include "event2/listener.h"
 #include "compat/sys/queue.h"
-#include "cache_utils.h"
+#include "proxy_settings.h"
 #include "url_connection.h"
 #include "request_parser.h"
 #include "common.h"
@@ -20,22 +20,21 @@
 namespace proxy {
 
 static void *StartSocketThread(void *user_data);
-
 static void listener_callback(
     struct evconnlistener *, evutil_socket_t,
     struct sockaddr *, int socket_len, void *);
 static void conn_read_callback(struct bufferevent *, void *);
 static void conn_event_callback(struct bufferevent *, short, void *);
 
-ProxyServer::ProxyServer()
-    : socket_thread_()
-    , cache_dir_()
-    , event_base_(nullptr)
-    , event_conn_listener_(nullptr)
-    , event_loop_running_(false) {
+ProxyManager::ProxyManager()
+  : socket_thread_()
+  , cache_dir_()
+  , event_base_(nullptr)
+  , event_conn_listener_(nullptr)
+  , event_loop_running_(false) {
 }
 
-ProxyServer::~ProxyServer() {
+ProxyManager::~ProxyManager() {
   pthread_join(socket_thread_, NULL);
   if (event_conn_listener_ != NULL) {
     evconnlistener_free(event_conn_listener_);
@@ -48,23 +47,23 @@ ProxyServer::~ProxyServer() {
 }
 
 static void *StartSocketThread(void *user_data) {
-  auto proxy_server = reinterpret_cast<proxy::ProxyServer *>(user_data);
-  proxy_server->StartProxyTask();
+  auto proxy_manager = reinterpret_cast<proxy::ProxyManager *>(user_data);
+  proxy_manager->StartProxyTask();
   pthread_exit(NULL);
 }
 
-void ProxyServer::SetCacheDir(const char *dir) {
-  cache::CacheUtils::SetCacheDir(dir);
+void ProxyManager::InitCacheConfig(cache::CacheConfig *cache_config) {
+  common::ProxySettings::InitCacheConfig(cache_config);
 }
 
-void ProxyServer::Start() {
+void ProxyManager::Start() {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   pthread_create(&socket_thread_, &attr, StartSocketThread, this);
 }
 
-void ProxyServer::Close() {
+void ProxyManager::Close() {
   if (event_base_ != NULL) {
     while (event_loop_running_) {
       event_base_loopbreak(event_base_);
@@ -80,7 +79,7 @@ void ProxyServer::Close() {
   }
 }
 
-void ProxyServer::StartProxyTask() {
+void ProxyManager::StartProxyTask() {
   if (event_base_ == NULL) {
     event_base_ = event_base_new();
     if (event_base_ == NULL) {

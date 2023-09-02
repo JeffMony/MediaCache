@@ -2,22 +2,23 @@
 // Created by jefflee on 2023/8/31.
 //
 
-#ifndef PLAYERSDK_MEDIACACHE_SOURCE_PROXY_SERVER_H_
-#define PLAYERSDK_MEDIACACHE_SOURCE_PROXY_SERVER_H_
+#ifndef PLAYERSDK_MEDIACACHE_SOURCE_PROXY_MANAGER_H_
+#define PLAYERSDK_MEDIACACHE_SOURCE_PROXY_MANAGER_H_
 
 #include <pthread.h>
 #include <string>
+#include "cache_config.h"
 #include "event2/http.h"
 
 namespace proxy {
 
-class ProxyServer {
+class ProxyManager {
  public:
-  ProxyServer();
+  ProxyManager();
 
-  virtual ~ProxyServer();
+  virtual ~ProxyManager();
 
-  void SetCacheDir(const char *dir);
+  void InitCacheConfig(cache::CacheConfig *cache_config);
 
   void Start();
 
@@ -36,4 +37,4 @@ class ProxyServer {
 
 }
 
-#endif //PLAYERSDK_MEDIACACHE_SOURCE_PROXY_SERVER_H_
+#endif //PLAYERSDK_MEDIACACHE_SOURCE_PROXY_MANAGER_H_

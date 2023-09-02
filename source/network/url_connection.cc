@@ -12,7 +12,6 @@
 #include "openssl/err.h"
 #include "openssl/rand.h"
 #include "response_info.h"
-#include "cache_utils.h"
 #include "log.h"
 
 namespace net {
@@ -236,7 +235,6 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx) {
   if (response_code == RESPONSE_OK || response_code == RESPONSE_PARTIAL) {
     std::string response_header_str = GetResponseHeader(response_header);
     bufferevent_write(proxy_bev, response_header_str.c_str(), response_header_str.length());
-    std::string cache_dir = cache::CacheUtils::GetCacheDir();
     char buffer[4096];
     int read;
     FILE *fp;

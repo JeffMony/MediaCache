@@ -14,8 +14,8 @@ namespace proxy {
 
 ProxyManagerAndroid::ProxyManagerAndroid(jobject object)
   : proxy_manager_object_(object)
-  , proxy_server_(NULL) {
-  proxy_server_ = new proxy::ProxyServer();
+  , proxy_manager_(NULL) {
+  proxy_manager_ = new proxy::ProxyManager();
 }
 
 ProxyManagerAndroid::~ProxyManagerAndroid() {
@@ -32,15 +32,15 @@ ProxyManagerAndroid::~ProxyManagerAndroid() {
   }
 }
 
-void ProxyManagerAndroid::SetCacheDir(const char *cache_dir) {
-  if (proxy_server_ != NULL) {
-    proxy_server_->SetCacheDir(cache_dir);
+void ProxyManagerAndroid::InitCacheConfig(cache::CacheConfig *cache_config) {
+  if (proxy_manager_ != NULL) {
+    proxy_manager_->InitCacheConfig(cache_config);
   }
 }
 
 void ProxyManagerAndroid::Start() {
-  if (proxy_server_ != NULL) {
-    proxy_server_->Start();
+  if (proxy_manager_ != NULL) {
+    proxy_manager_->Start();
   }
 }
 
@@ -57,8 +57,8 @@ std::string ProxyManagerAndroid::GetProxyUrl(const char *url) {
 }
 
 void ProxyManagerAndroid::Close() {
-  if (proxy_server_ != NULL) {
-    proxy_server_->Close();
+  if (proxy_manager_ != NULL) {
+    proxy_manager_->Close();
   }
 }
 
