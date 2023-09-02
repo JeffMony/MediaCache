@@ -131,7 +131,7 @@ static void conn_read_callback(struct bufferevent *bev, void *user_data) {
   struct evbuffer *input_buffer = bufferevent_get_input(bev);
   int length = evbuffer_get_length(input_buffer);
   const char *buffer_body = (const char *) evbuffer_pullup(input_buffer, length);
-  RequestParser *request_parser = new RequestParser(buffer_body);
+  net::RequestParser *request_parser = new net::RequestParser(buffer_body);
   std::string url = request_parser->GetUrl();
   LOGI("%s %s %d url=%s, %s", __FILE_NAME__, __func__ , __LINE__, url.c_str(), buffer_body);
   if (!url.empty()) {

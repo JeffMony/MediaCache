@@ -30,7 +30,7 @@ JavaVM *jni_get_java_vm() {
 }
 
 int jni_get_env(JNIEnv **env) {
-  JavaVM *vm = media_jni_get_java_vm();
+  JavaVM *vm = jni_get_java_vm();
   int ret = (*vm)->GetEnv(vm, (void **) env, JNI_VERSION_1_6);
   if (ret == JNI_EDETACHED) {
     if ((*vm)->AttachCurrentThread(vm, env, NULL) != JNI_OK) {
@@ -43,6 +43,6 @@ int jni_get_env(JNIEnv **env) {
 }
 
 void jni_detach_thread_env() {
-  JavaVM *vm = media_jni_get_java_vm();
+  JavaVM *vm = jni_get_java_vm();
   (*vm)->DetachCurrentThread(vm);
 }
