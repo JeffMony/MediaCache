@@ -136,7 +136,7 @@ static void conn_read_callback(struct bufferevent *bev, void *user_data) {
   if (!url.empty()) {
     net::URLConnection *url_connection = new net::URLConnection();
     url_connection->SetProxyBufferEvent(bev);
-    int ret = url_connection->Start(url.c_str(), request_parser->GetRequestInfo());
+    int ret = url_connection->Start(request_parser->GetRequestInfo());
     LOGI("%s %s %d ret=%d", __FILE_NAME__, __func__ , __LINE__, ret);
   }
   delete request_parser;

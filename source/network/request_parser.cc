@@ -11,7 +11,7 @@
 namespace net {
 
 RequestParser::RequestParser(const char *data)
-    : request_info_(nullptr) {
+  : request_info_(nullptr) {
   Parse(data);
 }
 

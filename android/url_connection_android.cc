@@ -11,8 +11,8 @@ extern "C" {
 namespace net {
 
 URLConnectionAndroid::URLConnectionAndroid(jobject object)
-    : url_connection_object_(object)
-    , url_connection_(NULL) {
+  : url_connection_object_(object)
+  , url_connection_(NULL) {
 
 }
 
@@ -38,7 +38,11 @@ void URLConnectionAndroid::Start(const char *url) {
   if (url_connection_ == NULL) {
     url_connection_ = new URLConnection();
   }
-  url_connection_->Start(url, NULL);
+  RequestInfo *request_info = new RequestInfo();
+  request_info->url.clear();
+  request_info->url.append(url);
+  url_connection_->Start(request_info);
+  delete request_info;
 }
 
 void URLConnectionAndroid::Close() {

@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace net {
+
 struct RequestInfo {
   std::string url;
   long range_start;
@@ -17,5 +19,7 @@ enum IP_TYPE {
   IP_V4 = 1000,
   IP_V6
 };
+
+}
 
 #endif //PLAYERSDK_MEDIACACHE_SOURCE_NETWORK_REQUEST_INFO_H_

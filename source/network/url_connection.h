@@ -26,7 +26,7 @@ class URLConnection {
 
   void SetIpType(IP_TYPE ip_type);
 
-  int Start(const char *url, RequestInfo *request_info);
+  int Start(RequestInfo *request_info);
 
   void Close();
 

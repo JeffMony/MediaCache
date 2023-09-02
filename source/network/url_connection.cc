@@ -70,7 +70,8 @@ void URLConnection::SetIpType(IP_TYPE ip_type) {
   ip_type_ = ip_type;
 }
 
-int URLConnection::Start(const char *url, RequestInfo *request_info) {
+int URLConnection::Start(RequestInfo *request_info) {
+  auto url = request_info->url.c_str();
   if (url == NULL || strcmp(url, "") == 0) {
     return -1;
   }
