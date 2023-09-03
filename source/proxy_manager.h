@@ -7,6 +7,7 @@
 
 #include <pthread.h>
 #include <string>
+#include "socket_listener.h"
 #include "cache_config.h"
 #include "event2/http.h"
 
@@ -20,14 +21,20 @@ class ProxyManager {
 
   void InitCacheConfig(cache::CacheConfig *cache_config);
 
-  void Start();
+  void Start(SocketListener *listener);
 
   void Close();
 
   void StartProxyTask();
 
  private:
+  void OnSocketCreateFailed();
+
+  void OnSocketCreateSuccess();
+
+ private:
   pthread_t socket_thread_;
+  SocketListener *socket_listener_;
   std::string cache_dir_;
   struct event_base *event_base_;
   struct evconnlistener *event_conn_listener_;

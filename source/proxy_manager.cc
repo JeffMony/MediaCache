@@ -28,9 +28,10 @@ static void conn_event_callback(struct bufferevent *, short, void *);
 
 ProxyManager::ProxyManager()
   : socket_thread_()
+  , socket_listener_(NULL)
   , cache_dir_()
-  , event_base_(nullptr)
-  , event_conn_listener_(nullptr)
+  , event_base_(NULL)
+  , event_conn_listener_(NULL)
   , event_loop_running_(false) {
 }
 
@@ -56,7 +57,8 @@ void ProxyManager::InitCacheConfig(cache::CacheConfig *cache_config) {
   common::ProxySettings::InitCacheConfig(cache_config);
 }
 
-void ProxyManager::Start() {
+void ProxyManager::Start(SocketListener *listener) {
+  socket_listener_ = listener;
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -84,6 +86,7 @@ void ProxyManager::StartProxyTask() {
     event_base_ = event_base_new();
     if (event_base_ == NULL) {
       LOGI("%s %s %d Could not initialize event_base", __FILE_NAME__, __func__ , __LINE__);
+      OnSocketCreateFailed();
       return;
     }
     LOGI("%s %s %d initialize event_base success", __FILE_NAME__, __func__ , __LINE__);
@@ -95,23 +98,56 @@ void ProxyManager::StartProxyTask() {
     memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = inet_addr(LOCAL_PROXY);
-    sin.sin_port = htons(LISTEN_PORT); /// 固定一个端口号
+    sin.sin_port = 0;       /// 随机分配一个可用的端口号
 
-    event_conn_listener_ = evconnlistener_new_bind(
+    evutil_socket_t result_fd = 0;
+    event_conn_listener_ = evconnlistener_new_bind_custom(
         event_base_, listener_callback, (void *) event_base_,
         LEV_OPT_REUSEABLE | LEV_OPT_CLOSE_ON_FREE, -1,
-        (struct sockaddr *) &sin, sizeof(sin));
+        (struct sockaddr *) &sin, sizeof(sin), &result_fd);
 
     if (event_conn_listener_ == NULL) {
       LOGI("%s %s %d Could not initialize event base listener", __FILE_NAME__, __func__ , __LINE__);
+      OnSocketCreateFailed();
       return;
     }
-    LOGI("%s %s %d initialize event base listener success", __FILE_NAME__, __func__ , __LINE__);
+
+    struct sockaddr_in conn_addr;
+    memset(&conn_addr, 0, sizeof(struct sockaddr_in));
+    unsigned int socket_length = sizeof(conn_addr);
+    int ret = getsockname(result_fd, (sockaddr*)&conn_addr, &socket_length);
+    if (ret != 0) {
+      LOGE("%s %s %d getsockname failed ret=%d", __FILE_NAME__, __func__ , __LINE__, ret);
+      OnSocketCreateFailed();
+      if (event_conn_listener_ != NULL) {
+        evconnlistener_free(event_conn_listener_);
+        event_conn_listener_ = NULL;
+      }
+      return;
+    }
+    int result_port = ntohs(conn_addr.sin_port);
+    LOGI("%s %s %d initialize event base listener success, port=%d", __FILE_NAME__, __func__ , __LINE__, result_port);
+    if (socket_listener_ != NULL) {
+      socket_listener_->OnSocketPortCallback(result_port);
+    }
+    OnSocketCreateSuccess();
   }
   LOGI("%s %s %d", __FILE_NAME__, __func__ , __LINE__);
   event_loop_running_ = true;
   event_base_dispatch(event_base_);
   event_loop_running_ = false;
+}
+
+void ProxyManager::OnSocketCreateFailed() {
+  if (socket_listener_ != NULL) {
+    socket_listener_->OnSocketCreateResult(false);
+  }
+}
+
+void ProxyManager::OnSocketCreateSuccess() {
+  if (socket_listener_ != NULL) {
+    socket_listener_->OnSocketCreateResult(true);
+  }
 }
 
 static void listener_callback(

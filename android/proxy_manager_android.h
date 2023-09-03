@@ -9,10 +9,11 @@
 #include <string>
 #include "proxy_manager.h"
 #include "cache_config.h"
+#include "socket_listener.h"
 
 namespace proxy {
 
-class ProxyManagerAndroid {
+class ProxyManagerAndroid : public SocketListener {
  public:
   explicit ProxyManagerAndroid(jobject object);
 
@@ -26,9 +27,16 @@ class ProxyManagerAndroid {
 
   void Close();
 
+ protected:
+  void OnSocketPortCallback(int port) override;
+
+  void OnSocketCreateResult(bool success) override;
+
  private:
   jobject proxy_manager_object_;
   ProxyManager *proxy_manager_;
+  bool socket_created_;
+  int socket_port_;
 };
 
 }
