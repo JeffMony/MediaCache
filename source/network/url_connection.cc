@@ -7,16 +7,20 @@
 #include "event2/buffer.h"
 #include "event.h"
 #include "event2/keyvalq_struct.h"
+#ifdef USE_OPENSSL
 #include "event2/bufferevent_ssl.h"
 #include "openssl/ssl.h"
 #include "openssl/err.h"
 #include "openssl/rand.h"
+#endif
 #include "response_info.h"
 #include "log.h"
 
 namespace net {
 
+#ifdef USE_OPENSSL
 static int cert_verify_callback(X509_STORE_CTX *x509_ctx, void *arg);
+#endif
 
 static void http_request_done_callback(struct evhttp_request *req, void *ctx);
 
@@ -122,9 +126,12 @@ int URLConnection::Start(RequestInfo *request_info) {
     event_base_loopbreak(event_base_);
   }
   struct bufferevent *bev = NULL;
+#ifdef USE_OPENSSL
   SSL_CTX *ssl_ctx = NULL;
   SSL *ssl = NULL;
+#endif
   if (is_https) {
+#ifdef USE_OPENSSL
     SSL_library_init();
     ERR_load_crypto_strings();
     SSL_load_error_strings();
@@ -147,6 +154,7 @@ int URLConnection::Start(RequestInfo *request_info) {
     SSL_set_tlsext_host_name(ssl, host);
     bev = bufferevent_openssl_socket_new(event_base_, -1, ssl, BUFFEREVENT_SSL_CONNECTING, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS);
     bufferevent_openssl_set_allow_dirty_shutdown(bev, 1);
+#endif
   } else {
     bev = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE);
   }
@@ -251,6 +259,7 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx) {
   delete response_header;
 }
 
+#ifdef USE_OPENSSL
 /**
  * 证书校验回调
  * @param x509_ctx
@@ -261,5 +270,6 @@ static int cert_verify_callback(X509_STORE_CTX *x509_ctx, void *arg) {
   LOGI("%s %s %d", __FILE_NAME__, __func__ , __LINE__);
   return 1;
 }
+#endif
 
 }
