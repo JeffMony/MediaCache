@@ -7,6 +7,7 @@
 
 #include "event2/http.h"
 #include "request_info.h"
+#include "buffer_listener.h"
 
 namespace net {
 
@@ -14,7 +15,11 @@ class URLConnection {
  public:
   explicit URLConnection();
 
+  explicit URLConnection(proxy::BufferListener *listener);
+
   virtual ~URLConnection();
+
+  proxy::BufferListener *GetBufferListener();
 
   void SetProxyBufferEvent(struct bufferevent *bev);
 
@@ -31,6 +36,7 @@ class URLConnection {
   void Close();
 
  private:
+  proxy::BufferListener *buffer_listener_;
   struct bufferevent *proxy_bev_;
   struct event_base *event_base_;
   struct evhttp_connection *evhttp_connection_;

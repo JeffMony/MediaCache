@@ -43,6 +43,14 @@ static jstring PROXY_MANAGER_GET_PROXY_URL(JNIEnv *env, jobject object, jlong id
   return env->NewStringUTF(proxy_url.c_str());
 }
 
+static void PROXY_MANAGER_ADD_CACHE_LISTENER(JNIEnv *env, jobject object, jlong id, jstring j_url, jobject j_cache_listener) {
+
+}
+
+static void PROXY_MANAGER_REMOVE_CACHE_LISTENER(JNIEnv *env, jobject object, jlong id, jstring j_url) {
+
+}
+
 static void PROXY_MANAGER_START(JNIEnv *env, jobject object, jlong id) {
   proxy::ProxyManagerAndroid *proxy_manager_android = reinterpret_cast<proxy::ProxyManagerAndroid *>(id);
   proxy_manager_android->Start();
@@ -58,6 +66,8 @@ static JNINativeMethod proxyManagerMethods[] = {
     {"initConfig", "(JLcom/jeffmony/mediacache/ProxyConfig;)V", (void **) PROXY_MANAGER_INIT_CONFIG },
     {"getProxyUrl", "(JLjava/lang/String;)Ljava/lang/String;", (void **) PROXY_MANAGER_GET_PROXY_URL },
     {"start", "(J)V", (void **) PROXY_MANAGER_START },
+    {"addCacheListener", "(JLjava/lang/String;Lcom/jeffmony/mediacache/listener/CacheListener;)V", (void **) PROXY_MANAGER_ADD_CACHE_LISTENER },
+    {"removeCacheListener", "(JLjava/lang/String;)V", (void **) PROXY_MANAGER_REMOVE_CACHE_LISTENER },
     {"close", "(J)V", (void **) PROXY_MANAGER_CLOSE },
 };
 

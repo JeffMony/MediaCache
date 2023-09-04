@@ -12,7 +12,7 @@
 #include "event2/listener.h"
 #include "compat/sys/queue.h"
 #include "proxy_settings.h"
-#include "url_connection.h"
+#include "proxy_cache.h"
 #include "request_parser.h"
 #include "common.h"
 #include "log.h"
@@ -170,9 +170,9 @@ static void conn_read_callback(struct bufferevent *bev, void *user_data) {
   std::string url = request_parser->GetUrl();
   LOGI("%s %s %d url=%s, %s", __FILE_NAME__, __func__ , __LINE__, url.c_str(), buffer_body);
   if (!url.empty()) {
-    net::URLConnection *url_connection = new net::URLConnection();
-    url_connection->SetProxyBufferEvent(bev);
-    int ret = url_connection->Start(request_parser->GetRequestInfo());
+    ProxyCache *proxy_cache = new ProxyCache();
+    proxy_cache->SetProxyBufferEvent(bev);
+    int ret = proxy_cache->Start(request_parser->GetRequestInfo());
     LOGI("%s %s %d ret=%d", __FILE_NAME__, __func__ , __LINE__, ret);
   }
   delete request_parser;

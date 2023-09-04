@@ -25,13 +25,26 @@ static int cert_verify_callback(X509_STORE_CTX *x509_ctx, void *arg);
 static void http_request_done_callback(struct evhttp_request *req, void *ctx);
 
 URLConnection::URLConnection()
-    : proxy_bev_(NULL)
-    , event_base_(NULL)
-    , evhttp_connection_(NULL)
-    , evhttp_uri_(NULL)
-    , time_out_(15)
-    , retry_count_(1)
-    , ip_type_(IP_V4) {
+  : buffer_listener_(NULL)
+  , proxy_bev_(NULL)
+  , event_base_(NULL)
+  , evhttp_connection_(NULL)
+  , evhttp_uri_(NULL)
+  , time_out_(15)
+  , retry_count_(1)
+  , ip_type_(IP_V4) {
+}
+
+URLConnection::URLConnection(proxy::BufferListener *listener)
+  : buffer_listener_(listener)
+  , proxy_bev_(NULL)
+  , event_base_(NULL)
+  , evhttp_connection_(NULL)
+  , evhttp_uri_(NULL)
+  , time_out_(15)
+  , retry_count_(1)
+  , ip_type_(IP_V4) {
+
 }
 
 URLConnection::~URLConnection() {
@@ -49,6 +62,10 @@ URLConnection::~URLConnection() {
     event_base_ = NULL;
   }
   LOGI("leave: %s %s %d", __FILE_NAME__, __func__ , __LINE__);
+}
+
+proxy::BufferListener *URLConnection::GetBufferListener() {
+  return buffer_listener_;
 }
 
 void URLConnection::SetProxyBufferEvent(struct bufferevent *bev) {
@@ -217,6 +234,7 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx) {
   }
   net::URLConnection *url_connection = reinterpret_cast<net::URLConnection *>(ctx);
   struct bufferevent *proxy_bev = url_connection->GetProxyBufferEvent();
+  proxy::BufferListener *buffer_listener = url_connection->GetBufferListener();
   int response_code = evhttp_request_get_response_code(req);
   struct evkeyvalq *input_headers = evhttp_request_get_input_headers(req);
   long content_length = 0;
@@ -243,13 +261,13 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx) {
   }
   if (response_code == RESPONSE_OK || response_code == RESPONSE_PARTIAL) {
     std::string response_header_str = GetResponseHeader(response_header);
-    bufferevent_write(proxy_bev, response_header_str.c_str(), response_header_str.length());
+    buffer_listener->OnBufferCallback(const_cast<char *>(response_header_str.c_str()), response_header_str.length(), true);
     char buffer[4096];
     int read;
     FILE *fp;
     fp = fopen("/sdcard/Pictures/test_ltp.mp4", "w");
     while ((read = evbuffer_remove(evhttp_request_get_input_buffer(req), buffer, sizeof(buffer))) > 0) {
-      bufferevent_write(proxy_bev, buffer, read);
+      buffer_listener->OnBufferCallback(buffer, read, false);
       fwrite(buffer, read, 1, fp);
     }
     fclose(fp);
