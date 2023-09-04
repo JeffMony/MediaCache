@@ -26,7 +26,6 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx);
 
 URLConnection::URLConnection()
   : buffer_listener_(NULL)
-  , proxy_bev_(NULL)
   , event_base_(NULL)
   , evhttp_connection_(NULL)
   , evhttp_uri_(NULL)
@@ -37,7 +36,6 @@ URLConnection::URLConnection()
 
 URLConnection::URLConnection(proxy::BufferListener *listener)
   : buffer_listener_(listener)
-  , proxy_bev_(NULL)
   , event_base_(NULL)
   , evhttp_connection_(NULL)
   , evhttp_uri_(NULL)
@@ -66,14 +64,6 @@ URLConnection::~URLConnection() {
 
 proxy::BufferListener *URLConnection::GetBufferListener() {
   return buffer_listener_;
-}
-
-void URLConnection::SetProxyBufferEvent(struct bufferevent *bev) {
-  proxy_bev_ = bev;
-}
-
-struct bufferevent * URLConnection::GetProxyBufferEvent() {
-  return proxy_bev_;
 }
 
 void URLConnection::SetTimeOut(int time_out) {
@@ -233,7 +223,6 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx) {
     return;
   }
   net::URLConnection *url_connection = reinterpret_cast<net::URLConnection *>(ctx);
-  struct bufferevent *proxy_bev = url_connection->GetProxyBufferEvent();
   proxy::BufferListener *buffer_listener = url_connection->GetBufferListener();
   int response_code = evhttp_request_get_response_code(req);
   struct evkeyvalq *input_headers = evhttp_request_get_input_headers(req);

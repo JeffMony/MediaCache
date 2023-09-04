@@ -21,10 +21,6 @@ class URLConnection {
 
   proxy::BufferListener *GetBufferListener();
 
-  void SetProxyBufferEvent(struct bufferevent *bev);
-
-  struct bufferevent *GetProxyBufferEvent();
-
   void SetTimeOut(int time_out);
 
   void SetRetryCount(int retry_count);
@@ -37,7 +33,6 @@ class URLConnection {
 
  private:
   proxy::BufferListener *buffer_listener_;
-  struct bufferevent *proxy_bev_;
   struct event_base *event_base_;
   struct evhttp_connection *evhttp_connection_;
   struct evhttp_uri *evhttp_uri_;
