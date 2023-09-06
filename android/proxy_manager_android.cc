@@ -41,9 +41,9 @@ void ProxyManagerAndroid::InitCacheConfig(cache::CacheConfig *cache_config) {
   }
 }
 
-void ProxyManagerAndroid::Start() {
+void ProxyManagerAndroid::StartProxy() {
   if (proxy_manager_ != NULL) {
-    proxy_manager_->Start(this);
+    proxy_manager_->StartProxy(this);
   }
 }
 
@@ -62,6 +62,12 @@ std::string ProxyManagerAndroid::GetProxyUrl(const char *url) {
     result.append(url);
   }
   return result;
+}
+
+void ProxyManagerAndroid::Stop(const char *url) {
+  if (proxy_manager_ != NULL) {
+    proxy_manager_->Stop(url);
+  }
 }
 
 void ProxyManagerAndroid::Close() {

@@ -12,14 +12,13 @@
 #include "event2/listener.h"
 #include "compat/sys/queue.h"
 #include "proxy_settings.h"
-#include "proxy_cache.h"
 #include "request_parser.h"
 #include "common.h"
 #include "log.h"
 
 namespace proxy {
 
-static void *StartSocketThread(void *user_data);
+static void *StartProxyThread(void *user_data);
 static void listener_callback(
     struct evconnlistener *, evutil_socket_t,
     struct sockaddr *, int socket_len, void *);
@@ -47,9 +46,9 @@ ProxyManager::~ProxyManager() {
   }
 }
 
-static void *StartSocketThread(void *user_data) {
+static void *StartProxyThread(void *user_data) {
   auto proxy_manager = reinterpret_cast<proxy::ProxyManager *>(user_data);
-  proxy_manager->StartProxyTask();
+  proxy_manager->StartProxyInternal();
   pthread_exit(NULL);
 }
 
@@ -57,12 +56,16 @@ void ProxyManager::InitCacheConfig(cache::CacheConfig *cache_config) {
   common::ProxySettings::InitCacheConfig(cache_config);
 }
 
-void ProxyManager::Start(SocketListener *listener) {
+void ProxyManager::StartProxy(SocketListener *listener) {
   socket_listener_ = listener;
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  pthread_create(&socket_thread_, &attr, StartSocketThread, this);
+  pthread_create(&socket_thread_, &attr, StartProxyThread, this);
+}
+
+void ProxyManager::Stop(const char *url) {
+
 }
 
 void ProxyManager::Close() {
@@ -81,7 +84,7 @@ void ProxyManager::Close() {
   }
 }
 
-void ProxyManager::StartProxyTask() {
+void ProxyManager::StartProxyInternal() {
   if (event_base_ == NULL) {
     event_base_ = event_base_new();
     if (event_base_ == NULL) {

@@ -21,9 +21,11 @@ class ProxyManagerAndroid : public SocketListener {
 
   void InitCacheConfig(cache::CacheConfig *cache_config);
 
-  void Start();
+  void StartProxy();
 
   std::string GetProxyUrl(const char *url);
+
+  void Stop(const char *url);
 
   void Close();
 

@@ -35,6 +35,7 @@ class URLConnection {
   proxy::BufferListener *buffer_listener_;
   struct event_base *event_base_;
   struct evhttp_connection *evhttp_connection_;
+  struct evhttp_request *evhttp_request_;
   struct evhttp_uri *evhttp_uri_;
   int time_out_;
   int retry_count_;

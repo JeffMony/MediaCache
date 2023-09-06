@@ -7,9 +7,11 @@
 
 #include <pthread.h>
 #include <string>
+#include <map>
+#include "event2/http.h"
 #include "socket_listener.h"
 #include "cache_config.h"
-#include "event2/http.h"
+#include "proxy_cache.h"
 
 namespace proxy {
 
@@ -21,11 +23,13 @@ class ProxyManager {
 
   void InitCacheConfig(cache::CacheConfig *cache_config);
 
-  void Start(SocketListener *listener);
+  void StartProxy(SocketListener *listener);
+
+  void Stop(const char *url);
 
   void Close();
 
-  void StartProxyTask();
+  void StartProxyInternal();
 
  private:
   void OnSocketCreateFailed();
@@ -39,6 +43,8 @@ class ProxyManager {
   struct event_base *event_base_;
   struct evconnlistener *event_conn_listener_;
   bool event_loop_running_;
+  std::map<std::string, ProxyCache *> proxy_cache_map_;
+
 
 };
 

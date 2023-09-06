@@ -28,6 +28,7 @@ URLConnection::URLConnection()
   : buffer_listener_(NULL)
   , event_base_(NULL)
   , evhttp_connection_(NULL)
+  , evhttp_request_(NULL)
   , evhttp_uri_(NULL)
   , time_out_(15)
   , retry_count_(1)
@@ -38,6 +39,7 @@ URLConnection::URLConnection(proxy::BufferListener *listener)
   : buffer_listener_(listener)
   , event_base_(NULL)
   , evhttp_connection_(NULL)
+  , evhttp_request_(NULL)
   , evhttp_uri_(NULL)
   , time_out_(15)
   , retry_count_(1)
@@ -47,6 +49,11 @@ URLConnection::URLConnection(proxy::BufferListener *listener)
 
 URLConnection::~URLConnection() {
   LOGI("enter: %s %s %d", __FILE_NAME__, __func__ , __LINE__);
+  if (evhttp_request_ != NULL) {
+    evhttp_cancel_request(evhttp_request_);
+    evhttp_request_free(evhttp_request_);
+    evhttp_request_ = NULL;
+  }
   if (evhttp_connection_ != NULL) {
     evhttp_connection_free(evhttp_connection_);
     evhttp_connection_ = NULL;
@@ -130,7 +137,13 @@ int URLConnection::Start(RequestInfo *request_info) {
       return -5;
     }
   } else {
-    event_base_loopbreak(event_base_);
+    int ret = event_base_loopbreak(event_base_);
+    LOGI("%s %s %d event_base_loopbreak ret=%d", __FILE_NAME__, __func__ , __LINE__, ret);
+    if (evhttp_request_ != NULL) {
+      evhttp_cancel_request(evhttp_request_);
+      evhttp_request_free(evhttp_request_);
+      evhttp_request_ = NULL;
+    }
   }
   struct bufferevent *bev = NULL;
 #ifdef USE_OPENSSL
@@ -184,19 +197,20 @@ int URLConnection::Start(RequestInfo *request_info) {
   if (time_out_ > 0) {
     evhttp_connection_set_timeout(evhttp_connection_, time_out_);
   }
-  struct evhttp_request *request = evhttp_request_new(http_request_done_callback, this);
-  if (request == NULL) {
+  evhttp_request_ = evhttp_request_new(http_request_done_callback, this);
+  if (evhttp_request_ == NULL) {
     return -11;
   }
-  struct evkeyvalq *output_headers = evhttp_request_get_output_headers(request);
+  struct evkeyvalq *output_headers = evhttp_request_get_output_headers(evhttp_request_);
   evhttp_add_header(output_headers, "Host", host);
   evhttp_add_header(output_headers, "Connection", "close");
   if (request_info != NULL) {
     std::string range_header;
     range_header.append("bytes=").append(std::to_string(request_info->range_start)).append("-").append((request_info->range_end == LONG_MAX) ? "" : std::to_string(request_info->range_end));
     evhttp_add_header(output_headers, "Range", range_header.c_str());
+    LOGI("%s %s %d range=%s", __FILE_NAME__, __func__ , __LINE__, range_header.c_str());
   }
-  int ret = evhttp_make_request(evhttp_connection_, request, EVHTTP_REQ_GET, uri);
+  int ret = evhttp_make_request(evhttp_connection_, evhttp_request_, EVHTTP_REQ_GET, uri);
   if (ret != 0) {
     return -12;
   }
@@ -213,6 +227,8 @@ void URLConnection::Close() {
 
 /**
  * http 请求结果回调
+ *
+ * 回调函数和发起请求的函数在同一个线程
  *
  * 可以通过判断response_code 判断接下来的逻辑如何走
  * @param req
@@ -253,13 +269,13 @@ static void http_request_done_callback(struct evhttp_request *req, void *ctx) {
     buffer_listener->OnBufferCallback(const_cast<char *>(response_header_str.c_str()), response_header_str.length(), true);
     char buffer[4096];
     int read;
-    FILE *fp;
-    fp = fopen("/sdcard/Pictures/test_ltp.mp4", "w");
+//    FILE *fp;
+//    fp = fopen("/sdcard/Pictures/test_ltp.mp4", "w");
     while ((read = evbuffer_remove(evhttp_request_get_input_buffer(req), buffer, sizeof(buffer))) > 0) {
       buffer_listener->OnBufferCallback(buffer, read, false);
-      fwrite(buffer, read, 1, fp);
+//      fwrite(buffer, read, 1, fp);
     }
-    fclose(fp);
+//    fclose(fp);
   } else if (response_code == LOCATION_PERMANENTLY || response_code == LOCATION_TEMPORARY) {
 
   }

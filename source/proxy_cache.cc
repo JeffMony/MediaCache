@@ -3,6 +3,7 @@
 //
 
 #include "proxy_cache.h"
+#include "log.h"
 
 namespace proxy {
 
