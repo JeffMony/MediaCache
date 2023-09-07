@@ -43,8 +43,6 @@ class ProxyManager {
   struct event_base *event_base_;
   struct evconnlistener *event_conn_listener_;
   bool event_loop_running_;
-  std::map<std::string, ProxyCache *> proxy_cache_map_;
-
 
 };
 

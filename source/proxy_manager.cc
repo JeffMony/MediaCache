@@ -18,6 +18,8 @@
 
 namespace proxy {
 
+static std::map<std::string, ProxyCache *> proxy_cache_map_;
+
 static void *StartProxyThread(void *user_data);
 static void listener_callback(
     struct evconnlistener *, evutil_socket_t,
@@ -65,7 +67,11 @@ void ProxyManager::StartProxy(SocketListener *listener) {
 }
 
 void ProxyManager::Stop(const char *url) {
-
+  auto iterator = proxy_cache_map_.find(std::string(url));
+  if (iterator != proxy_cache_map_.end()) {
+    proxy_cache_map_.erase(iterator);
+    delete iterator->second;
+  }
 }
 
 void ProxyManager::Close() {
@@ -172,13 +178,19 @@ static void conn_read_callback(struct bufferevent *bev, void *user_data) {
   net::RequestParser *request_parser = new net::RequestParser(buffer_body);
   std::string url = request_parser->GetUrl();
   LOGI("%s %s %d url=%s, %s", __FILE_NAME__, __func__ , __LINE__, url.c_str(), buffer_body);
-  if (!url.empty()) {
+  auto iterator = proxy_cache_map_.find(url);
+  int ret;
+  if (iterator != proxy_cache_map_.end()) {
+    ProxyCache *proxy_cache = iterator->second;
+    ret = proxy_cache->Start(request_parser->GetRequestInfo());
+  } else {
     ProxyCache *proxy_cache = new ProxyCache();
     proxy_cache->SetProxyBufferEvent(bev);
-    int ret = proxy_cache->Start(request_parser->GetRequestInfo());
-    LOGI("%s %s %d ret=%d", __FILE_NAME__, __func__ , __LINE__, ret);
+    ret = proxy_cache->Start(request_parser->GetRequestInfo());
+    proxy_cache_map_.insert(std::pair<std::string, ProxyCache *>(url, proxy_cache));
   }
   delete request_parser;
+  LOGI("leave: %s %s %d ret=%d", __FILE_NAME__, __func__ , __LINE__, ret);
 }
 
 static void conn_event_callback(struct bufferevent *bev, short events, void *user_data) {
